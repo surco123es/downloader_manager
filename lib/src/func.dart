@@ -1,20 +1,18 @@
-// ignore_for_file: camel_case_types
-
 import 'package:http/http.dart' as http;
 
-class httpStatus {
+class ManHttpStatus {
   bool status;
   Map<String, dynamic> header;
   String body;
-  httpStatus({
+  ManHttpStatus({
     required this.status,
     this.body = '',
     this.header = const {},
   });
 }
 
-Future<httpStatus> checkConexionFile(String url) async {
-  httpStatus rs = httpStatus(status: false);
+Future<ManHttpStatus> checkConexionFile(String url) async {
+  ManHttpStatus rs = ManHttpStatus(status: false);
   try {
     http.Response res =
         await http.get(Uri.parse(url), headers: {'Range': 'bytes=0-128'});

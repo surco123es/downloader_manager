@@ -1,6 +1,6 @@
 // ignore_for_file: unused_field, prefer_final_fields, camel_case_types, unused_element, library_private_types_in_public_api
 
-class _mimeType {
+class ManMimeType {
   Map<String, String> _ext = {
     "application/vnd.lotus-1-2-3": "123",
     "application/vnd.1000minds.decision-model+xml": "1km",
@@ -982,4 +982,4 @@ class _mimeType {
   }
 }
 
-_mimeType manMime = _mimeType();
+ManMimeType manMime = ManMimeType();

@@ -4,19 +4,19 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
-import '/src/merge.dart';
-
-import '/src/file.dart';
-import '/src/func.dart';
-import '/src/request.dart';
-import '/src/sendport.dart';
-import '/src/setting.dart';
 import 'package:http/http.dart' as http;
 
-class _part {
+import 'file.dart';
+import 'func.dart';
+import 'merge.dart';
+import 'request.dart';
+import 'sendport.dart';
+import 'setting.dart';
+
+class PartDownload {
   String url;
   int start, end, id;
-  _part({
+  PartDownload({
     required this.url,
     required this.start,
     required this.end,
@@ -24,12 +24,12 @@ class _part {
   });
 }
 
-class statusItem {
+class StatusItem {
   bool complete;
   bool start;
   bool error;
-  _part part;
-  statusItem({
+  PartDownload part;
+  StatusItem({
     this.complete = false,
     this.error = false,
     this.start = false,
@@ -37,7 +37,7 @@ class statusItem {
   });
 }
 
-class runDownload {
+class RunDownload {
   int startTime = 0;
   late Timer sendInterval;
   bool startInit = false;
@@ -49,16 +49,16 @@ class runDownload {
   bool sendPort = false;
   final Map<int, StreamSubscription> streamPart = {};
   late StreamSubscription reciverData;
-  List<statusItem> endpart = [];
+  List<StatusItem> endpart = [];
   Map<int, Future<bool>> run = {};
-  statusDownload status = statusDownload();
-  late manReques request;
-  late manSettings manSetting;
+  StatusDownload status = StatusDownload();
+  late ManReques request;
+  late ManSettings manSetting;
   late Map<String, dynamic> header;
   late ReceivePort rcv;
 
   starDownload(
-    manReques req,
+    ManReques req,
   ) {
     rcv = ReceivePort();
     reciverData = rcv.listen((m) {
@@ -71,7 +71,7 @@ class runDownload {
         startInit = false;
         endpart.clear();
         streamPart.clear();
-        status = statusDownload();
+        status = StatusDownload();
         sendInterval.cancel();
         download();
       } else if (rver.action == 'sendport') {
@@ -91,7 +91,7 @@ class runDownload {
 
   download() async {
     try {
-      httpStatus flD = await checkConexionFile(request.url);
+      ManHttpStatus flD = await checkConexionFile(request.url);
       if (flD.status) {
         header = flD.header;
         final int total = header.containsKey('content-range') == true
@@ -104,7 +104,7 @@ class runDownload {
         if (partDwn * numPart != total) {
           endPart = total - ((numPart - 1) * partDwn);
         }
-        status.main = manDownload(
+        status.main = ManDownload(
           key: request.token,
           porcent: 0,
           sizeDownload: 0,
@@ -122,7 +122,7 @@ class runDownload {
           } else {
             start = partDwn * i;
           }
-          status.part.add(manDownload(
+          status.part.add(ManDownload(
             key: request.token,
             porcent: 0,
             sizeDownload: 0,
@@ -136,8 +136,8 @@ class runDownload {
             start = start + 1;
           }
           endpart.add(
-            statusItem(
-              part: _part(
+            StatusItem(
+              part: PartDownload(
                 url: request.url,
                 start: start,
                 end: end,
@@ -162,7 +162,7 @@ class runDownload {
     if (nunRun < manSetting.conexion) {
       bool merge = false;
       int numComplet = 0;
-      for (statusItem e in endpart) {
+      for (StatusItem e in endpart) {
         if (!e.complete && !e.start) {
           if (nunRun < manSetting.conexion) {
             endpart[e.part.id].start = true;
@@ -205,7 +205,7 @@ class runDownload {
     }
   }
 
-  Future<bool> downloadPart(_part part) async {
+  Future<bool> downloadPart(PartDownload part) async {
     bool ret = true;
     try {
       File f = File('${manSetting.folderTemp}${request.token}${part.id}');
@@ -285,7 +285,7 @@ class runDownload {
     }
   }
 
-  int limitSend = 10;
+  int limitSend = 5;
   sendStatus() async {
     int sidow = 0;
     for (var e in status.part) {

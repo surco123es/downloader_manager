@@ -1,15 +1,14 @@
 import 'package:download_manager/download_manager.dart';
 
 void main() async {
-  String url = 'https://download.samplelib.com/mp4/sample-5s.mp4';
+  String url =
+      'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
   int tk = await manDownloader(
-    req: downRequire(url: url, fileName: 'filename1.mp4'),
+    req: DownRequire(url: url, fileName: 'yt'),
   );
-  for (int i = 0; i < 10; i++) {
-    manDown.task[tk]!.sub.stream.listen((e) {
-      print('conexion port $i - ${e.main.porcent}');
-    });
-  }
+  manDown.task[tk]!.sub.stream.listen((e) {
+    print('conexion port main - ${e.main.porcent}');
+  });
   /* for (int i = 0; i <= 3; i++) {
     String url = 'https://download.samplelib.com/mp4/sample-5s.mp4';
     manDownloader(

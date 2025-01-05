@@ -1,11 +1,9 @@
-// ignore_for_file: library_private_types_in_public_api, camel_case_types, unused_element
-
 import 'dart:async';
 import 'dart:io';
 
-import 'package:download_manager/download_manager.dart';
-import 'package:download_manager/src/mime.dart';
-import 'package:download_manager/src/request.dart';
+import 'mime.dart';
+import 'request.dart';
+import 'setting.dart';
 
 Future<int> _checkExists(String name, String ext, int num) async {
   if (await File('$name$num$ext').exists()) {
@@ -16,9 +14,9 @@ Future<int> _checkExists(String name, String ext, int num) async {
 }
 
 Future<String> joinMerge(
-  manReques req, {
+  ManReques req, {
   Map<String, dynamic> header = const {},
-  required manSettings manSetting,
+  required ManSettings manSetting,
   required int numpart,
 }) async {
   String fName = '';

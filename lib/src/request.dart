@@ -2,15 +2,15 @@
 
 import 'dart:isolate';
 
-import 'package:download_manager/download_manager.dart';
+import '../download_manager.dart';
 
-class manReques {
+class ManReques {
   String fileName, url;
-  manSettings setting;
+  ManSettings setting;
   bool priority, extension;
   int token;
   SendPort? sendPort;
-  manReques({
+  ManReques({
     this.fileName = '',
     required this.setting,
     required this.url,

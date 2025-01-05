@@ -2,18 +2,18 @@
 
 import 'dart:math';
 
-class manSettings {
+class ManSettings {
   int conexion;
   String folderTemp, folderOut;
   int limitBand;
-  manSettings({
+  ManSettings({
     this.conexion = 2,
     this.folderTemp = 'temp/',
     this.folderOut = 'out/',
     this.limitBand = 5000,
   });
-  factory manSettings.fronJson(Map<String, dynamic> js) {
-    return manSettings(
+  factory ManSettings.fronJson(Map<String, dynamic> js) {
+    return ManSettings(
       conexion: js['conexion'],
       folderOut: js['folderOut'],
       folderTemp: js['folderTemp'],
@@ -38,12 +38,12 @@ class manSettings {
   }
 }
 
-class downRequire {
+class DownRequire {
   String fileName, url;
   bool priority, extension;
-  manSettings? setting;
+  ManSettings? setting;
   int token;
-  downRequire({
+  DownRequire({
     this.fileName = '',
     required this.url,
     this.priority = false,

@@ -2,13 +2,13 @@
 
 import 'dart:isolate';
 
-import 'package:download_manager/src/task.dart';
+import 'task.dart';
 
-class manFile {
+class ManFile {
   String title, folderTemp, folderOut, url;
   bool replace, complete, download;
   int sizeFinal, sizeDownload, partDownload, key, task;
-  manFile({
+  ManFile({
     required this.title,
     required this.folderOut,
     required this.folderTemp,
@@ -24,12 +24,12 @@ class manFile {
   });
 }
 
-class manDownload {
+class ManDownload {
   int key, sizeDownload, sizeFinal;
   bool main, complete;
   double porcent;
   String speed;
-  manDownload({
+  ManDownload({
     required this.key,
     required this.complete,
     required this.speed,
@@ -40,12 +40,12 @@ class manDownload {
   });
 }
 
-class statusDownload {
+class StatusDownload {
   bool join = false;
   bool forceKill = false;
   SendPort? sendPort;
   bool kill = false;
-  manDownload main = manDownload(
+  ManDownload main = ManDownload(
     key: 0,
     porcent: 0,
     sizeDownload: 0,
@@ -54,7 +54,7 @@ class statusDownload {
     complete: false,
     speed: '...MB',
   );
-  List<manDownload> part = [];
+  List<ManDownload> part = [];
 }
 
-managerDownload manDown = managerDownload();
+ManagerDownload manDown = ManagerDownload();

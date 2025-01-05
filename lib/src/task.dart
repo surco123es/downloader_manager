@@ -3,22 +3,20 @@
 import 'dart:async';
 import 'dart:isolate';
 
-import 'package:download_manager/src/file.dart';
-import 'package:download_manager/src/request.dart';
-import 'package:download_manager/src/setting.dart';
-
+import '../download_manager.dart';
 import 'download.dart';
+import 'request.dart';
 
-class _thask {
+class TaskDownload {
   bool complete, pause, kill, init;
   late Isolate _root;
-  final StreamController<statusDownload> sub =
-      StreamController<statusDownload>.broadcast();
+  final StreamController<StatusDownload> sub =
+      StreamController<StatusDownload>.broadcast();
   ReceivePort rcvPort = ReceivePort();
   int token;
 
   late Capability _cap;
-  _thask({
+  TaskDownload({
     this.complete = false,
     this.pause = false,
     this.kill = false,
@@ -37,7 +35,7 @@ class _thask {
 
   listing() {
     rcvPort.listen((val) async {
-      statusDownload e = val;
+      StatusDownload e = val;
       sub.sink.add(e);
       if ((e.main.complete && e.kill) || e.forceKill) {
         complete = e.forceKill ? false : true;
@@ -51,11 +49,11 @@ class _thask {
   }
 }
 
-class managerDownload {
-  Map<int, _thask> task = {};
-  Future<bool> create(downRequire _rq) async {
-    manSettings msetting = _rq.setting ??= manSettings();
-    manReques _req = manReques(
+class ManagerDownload {
+  Map<int, TaskDownload> task = {};
+  Future<bool> create(DownRequire _rq) async {
+    ManSettings msetting = _rq.setting ??= ManSettings();
+    ManReques _req = ManReques(
       url: _rq.url,
       extension: _rq.extension,
       fileName: _rq.fileName,
@@ -64,11 +62,11 @@ class managerDownload {
       setting: msetting,
     );
     bool res = true;
-    _thask tsk = _thask(token: _req.token);
+    TaskDownload tsk = TaskDownload(token: _req.token);
     task.addAll({_req.token: tsk});
     _req.sendPort = task[_req.token]?.rcvPort.sendPort;
     task[_req.token]?._root =
-        await Isolate.spawn<manReques>(runDownload().starDownload, _req);
+        await Isolate.spawn<ManReques>(RunDownload().starDownload, _req);
     task[_req.token]?.listing();
     return res;
   }
