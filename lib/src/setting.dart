@@ -37,18 +37,3 @@ class ManSettings {
     return token;
   }
 }
-
-class DownRequire {
-  String fileName, url;
-  bool priority, extension;
-  ManSettings? setting;
-  int token;
-  DownRequire({
-    this.fileName = '',
-    required this.url,
-    this.priority = false,
-    this.extension = true,
-    this.setting,
-    this.token = 0,
-  });
-}

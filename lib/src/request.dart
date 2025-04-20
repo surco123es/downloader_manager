@@ -2,7 +2,7 @@
 
 import 'dart:isolate';
 
-import '../download_manager.dart';
+import '../downloader_manager.dart';
 
 class ManReques {
   String fileName, url;

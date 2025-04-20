@@ -14,16 +14,14 @@ class ManHttpStatus {
 Future<ManHttpStatus> checkConexionFile(String url) async {
   ManHttpStatus rs = ManHttpStatus(status: false);
   try {
-    http.Response res =
-        await http.get(Uri.parse(url), headers: {'Range': 'bytes=0-128'});
+    http.Response res = await http.head(Uri.parse(url));
     if (res.statusCode == 200 || res.statusCode == 206) {
       rs.status = true;
       rs.header = res.headers;
       rs.body = res.body;
     }
     return rs;
-  } catch (e_) {
-    print(e_);
+  } catch (e) {
     return rs;
   }
 }

@@ -13,6 +13,7 @@ Future<int> _checkExists(String name, String ext, int num) async {
   }
 }
 
+@pragma('vm:entry-point')
 Future<String> joinMerge(
   ManReques req, {
   Map<String, dynamic> header = const {},
@@ -35,10 +36,14 @@ Future<String> joinMerge(
     }
     fli = File(fName);
     if (await fli.exists()) {
-      int num = await _checkExists('${manSetting.folderOut}${req.fileName}-(',
-          ')${(req.extension ? ext : '')}', 1);
+      int num = await _checkExists(
+        '${manSetting.folderOut}${req.fileName}-(',
+        ')${(req.extension ? ext : '')}',
+        1,
+      );
       fli = File(
-          '${manSetting.folderOut}${req.fileName}-($num)${(req.extension ? ext : '')}');
+        '${manSetting.folderOut}${req.fileName}-($num)${(req.extension ? ext : '')}',
+      );
     }
     IOSink fl = fli.openWrite(mode: FileMode.writeOnlyAppend);
     for (int i = 0; i < numpart; i++) {

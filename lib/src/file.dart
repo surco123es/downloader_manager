@@ -2,8 +2,6 @@
 
 import 'dart:isolate';
 
-import 'task.dart';
-
 class ManFile {
   String title, folderTemp, folderOut, url;
   bool replace, complete, download;
@@ -41,10 +39,8 @@ class ManDownload {
 }
 
 class StatusDownload {
-  bool join = false;
-  bool forceKill = false;
+  bool join, forceKill, kill, error, rangeAccept;
   SendPort? sendPort;
-  bool kill = false;
   ManDownload main = ManDownload(
     key: 0,
     porcent: 0,
@@ -55,6 +51,12 @@ class StatusDownload {
     speed: '...MB',
   );
   List<ManDownload> part = [];
+  StatusDownload({
+    this.error = false,
+    this.join = false,
+    this.forceKill = false,
+    this.rangeAccept = true,
+    this.sendPort,
+    this.kill = false,
+  });
 }
-
-ManagerDownload manDown = ManagerDownload();

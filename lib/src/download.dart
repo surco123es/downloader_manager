@@ -1,5 +1,3 @@
-// ignoreforfile: camelcasetypes, unusedelement, libraryprivatetypesinpublicapi
-
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
@@ -56,10 +54,8 @@ class RunDownload {
   late ManSettings manSetting;
   late Map<String, dynamic> header;
   late ReceivePort rcv;
-
-  starDownload(
-    ManReques req,
-  ) {
+  @pragma('vm:entry-point')
+  starDownload(ManReques req) {
     rcv = ReceivePort();
     reciverData = rcv.listen((m) {
       ManMessagePort rver = m;
@@ -75,10 +71,8 @@ class RunDownload {
         sendInterval.cancel();
         download();
       } else if (rver.action == 'sendport') {
-        print('Aceeptado el sendPort');
         sendPort = true;
       } else if (rver.action == 'kill') {
-        print('the send message for kill process');
         status.forceKill = true;
         sendStatus();
         sendInterval.cancel();
@@ -89,14 +83,19 @@ class RunDownload {
     download();
   }
 
+  @pragma('vm:entry-point')
   download() async {
-    try {
-      ManHttpStatus flD = await checkConexionFile(request.url);
-      if (flD.status) {
-        header = flD.header;
-        final int total = header.containsKey('content-range') == true
-            ? int.parse(flD.header["content-range"]!.split('/')[1].toString())
-            : 0;
+    ManHttpStatus flD = await checkConexionFile(request.url);
+    if (flD.status) {
+      header = flD.header;
+      print(header);
+      final int total =
+          (header.containsKey('accept-ranges') == true &&
+                  header['accept-ranges'] == 'bytes' &&
+                  header.containsKey('content-length'))
+              ? int.parse(flD.header["content-length"])
+              : 0;
+      if (total != 0) {
         partSizeLimit = total < 10242880 ? (total / 3).ceil() : 5242880;
         numPart = (total / partSizeLimit).ceil();
         int partDwn = (total / numPart).ceil();
@@ -122,15 +121,17 @@ class RunDownload {
           } else {
             start = partDwn * i;
           }
-          status.part.add(ManDownload(
-            key: request.token,
-            porcent: 0,
-            sizeDownload: 0,
-            sizeFinal: ipart,
-            main: false,
-            complete: false,
-            speed: '..Mb',
-          ));
+          status.part.add(
+            ManDownload(
+              key: request.token,
+              porcent: 0,
+              sizeDownload: 0,
+              sizeFinal: ipart,
+              main: false,
+              complete: false,
+              speed: '..Mb',
+            ),
+          );
           int end = (start + ipart);
           if (i > 0) {
             start = start + 1;
@@ -146,16 +147,20 @@ class RunDownload {
             ),
           );
         }
-        initFuture();
       } else {
-        print('alerta');
+        endpart.add(
+          StatusItem(
+            part: PartDownload(url: request.url, start: 0, end: 0, id: 0),
+          ),
+        );
       }
-    } catch (e) {
-      print(e);
-      status.forceKill = true;
+      initFuture();
+    } else {
+      request.sendPort?.send(StatusDownload());
     }
   }
 
+  @pragma('vm:entry-point')
   initFuture({bool err = false}) async {
     int nunRun = streamPart.length;
     bool error = false;
@@ -205,32 +210,33 @@ class RunDownload {
     }
   }
 
+  @pragma('vm:entry-point')
   Future<bool> downloadPart(PartDownload part) async {
     bool ret = true;
     try {
       File f = File('${manSetting.folderTemp}${request.token}${part.id}');
-      http.Request req = http.Request(
-        'Get',
-        Uri.parse(part.url),
-      );
+      http.Request req = http.Request('Get', Uri.parse(part.url));
       bool exists = await f.exists();
       int idow = 0;
       if (exists) {
         idow = await f.length();
         totalSize += idow;
         part.start = part.start + idow;
-        req.headers['range'] = 'bytes=${part.start}-${part.end}';
+        req.headers['range'] =
+            'bytes=${part.start}-${part.end == 0 ? '' : part.end}';
         if (part.end - part.start < 0) {
           //initFuture();
           return ret;
         }
       } else {
-        req.headers['range'] = 'bytes=${part.start}-${part.end}';
+        req.headers['range'] =
+            'bytes=${part.start}-${part.end == 0 ? '' : part.end}';
       }
       http.StreamedResponse res = await cln.send(req);
-      IOSink fOut = exists
-          ? f.openWrite(mode: FileMode.append)
-          : f.openWrite(mode: FileMode.writeOnlyAppend);
+      IOSink fOut =
+          exists
+              ? f.openWrite(mode: FileMode.append)
+              : f.openWrite(mode: FileMode.writeOnlyAppend);
       streamPart.addAll({
         part.id: res.stream.listen((byte) async {
           idow += byte.length;
@@ -267,6 +273,7 @@ class RunDownload {
     return ret;
   }
 
+  @pragma('vm:entry-point')
   chargingMerge() async {
     fOut = await joinMerge(
       request,
@@ -286,6 +293,7 @@ class RunDownload {
   }
 
   int limitSend = 5;
+  @pragma('vm:entry-point')
   sendStatus() async {
     int sidow = 0;
     for (var e in status.part) {
@@ -296,8 +304,10 @@ class RunDownload {
     if (!sendPort) {
       status.sendPort = rcv.sendPort;
     }
-    status.main.speed =
-        velocity(startTime: startTime, size: status.main.sizeDownload);
+    status.main.speed = velocity(
+      startTime: startTime,
+      size: status.main.sizeDownload,
+    );
     if (!status.join && await File(fOut).exists()) {
       if (await File(fOut).length() == status.main.sizeFinal) {
         status.join = true;

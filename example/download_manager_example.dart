@@ -1,18 +1,49 @@
-import 'package:download_manager/download_manager.dart';
+import 'package:downloader_manager/download_manager.dart';
+import 'package:downloader_manager/src/model.dart';
 
+ManagerDownload manDown = ManagerDownload();
 void main() async {
-  String url =
-      'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
-  int tk = await manDownloader(
-    req: DownRequire(url: url, fileName: 'yt'),
-  );
-  manDown.task[tk]!.sub.stream.listen((e) {
-    print('conexion port main - ${e.main.porcent}');
-  });
-  /* for (int i = 0; i <= 3; i++) {
-    String url = 'https://download.samplelib.com/mp4/sample-5s.mp4';
-    manDownloader(
-      req: downRequire(url: url, fileName: 'filename$i.mp4'),
-    );
-  } */
+  List<DownloadManagerResponse> tokens = await [
+    await manDown.create(
+      req: DownRequire(
+        url:
+            'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe',
+        fileName: 'yt.exe',
+        extension: false,
+        priority: true,
+        token: 10001,
+      ),
+    ),
+    await manDown.create(
+      req: DownRequire(
+        url:
+            'https://github.com/surco123es/ffmpegDir/releases/download/1.1/ffprobe.exe',
+        fileName: 'ffprobe.exe',
+        extension: false,
+        priority: true,
+        token: 10002,
+      ),
+    ),
+    await manDown.create(
+      req: DownRequire(
+        url:
+            'https://github.com/surco123es/ffmpegDir/releases/download/1.1/ffmpeg.exe',
+        fileName: 'ffmpeg.exe',
+        extension: false,
+        priority: true,
+        token: 10003,
+        setting: ManSettings(folderOut: 'temp/', folderTemp: 'temp/'),
+      ),
+    ),
+  ];
+  for (DownloadManagerResponse tk in tokens) {
+    ControllerTask cn = manDown.controller(tk.token);
+    if (!cn.exists) return;
+    cn.controller!.listen((e) {
+      if (e.error) {
+        print('existio un error');
+      }
+      print('conexion port main - ${e.main.porcent}');
+    });
+  }
 }
