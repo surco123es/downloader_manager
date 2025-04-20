@@ -8,7 +8,7 @@ import 'model_require.dart';
 import 'request.dart';
 import 'setting.dart';
 
-class ManagerDownload {
+class DownloaderManager {
   Map<int, TaskDownload> _task = {};
 
   @pragma('vm:entry-point')

@@ -21,6 +21,7 @@ class TaskDownload {
   final StreamController<StatusDownload> statusDownload =
       StreamController<StatusDownload>.broadcast();
   ReceivePort rcvPort = ReceivePort();
+  ReceivePort _error = ReceivePort();
   int token;
 
   late Capability resume;
@@ -28,6 +29,11 @@ class TaskDownload {
 
   listing() {
     status.init = true;
+    root.addErrorListener(_error.sendPort);
+    _error.listen((error) {
+      print("Error recibido del isolate: ${error[0]}");
+      print("StackTrace: ${error[1]}");
+    });
     rcvPort.listen((val) async {
       status.status = val;
       statusDownload.sink.add(status.status);
@@ -42,16 +48,4 @@ class TaskDownload {
       }
     });
   }
-}
-
-class SelectTask {
-  bool exists;
-  TaskDownload? task;
-  SelectTask({this.exists = false, this.task});
-}
-
-class ControllerTask {
-  bool exists;
-  Stream<StatusDownload>? controller;
-  ControllerTask({this.controller, required this.exists});
 }

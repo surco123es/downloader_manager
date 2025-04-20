@@ -1,7 +1,6 @@
 import 'package:downloader_manager/downloader_manager.dart';
-import 'package:downloader_manager/src/model.dart';
 
-ManagerDownload manDown = ManagerDownload();
+DownloaderManager manDown = DownloaderManager();
 void main() async {
   List<DownloadManagerResponse> tokens = await [
     await manDown.create(

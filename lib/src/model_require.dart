@@ -1,3 +1,6 @@
+import 'package:downloader_manager/src/file.dart';
+import 'package:downloader_manager/src/model.dart';
+
 import 'setting.dart';
 
 class DownRequire {
@@ -18,8 +21,17 @@ class DownRequire {
 class DownloadManagerResponse {
   int token;
   bool status;
-  DownloadManagerResponse({
-    required this.token,
-    required this.status,
-  });
+  DownloadManagerResponse({required this.token, required this.status});
+}
+
+class SelectTask {
+  bool exists;
+  TaskDownload? task;
+  SelectTask({this.exists = false, this.task});
+}
+
+class ControllerTask {
+  bool exists;
+  Stream<StatusDownload>? controller;
+  ControllerTask({this.controller, required this.exists});
 }
