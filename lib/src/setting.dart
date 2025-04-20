@@ -12,22 +12,6 @@ class ManSettings {
     this.folderOut = 'out/',
     this.limitBand = 5000,
   });
-  factory ManSettings.fronJson(Map<String, dynamic> js) {
-    return ManSettings(
-      conexion: js['conexion'],
-      folderOut: js['folderOut'],
-      folderTemp: js['folderTemp'],
-      limitBand: js['limitBand'],
-    );
-  }
-  Map<String, dynamic> json() {
-    return {
-      'conexion': conexion,
-      'folderTemp': folderTemp,
-      'folderOut': folderOut,
-      'limitBand': limitBand
-    };
-  }
 
   int token() {
     Random random = Random();

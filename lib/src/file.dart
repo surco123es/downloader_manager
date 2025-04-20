@@ -23,12 +23,11 @@ class ManFile {
 }
 
 class ManDownload {
-  int key, sizeDownload, sizeFinal;
+  int sizeDownload, sizeFinal;
   bool main, complete;
   double porcent;
   String speed;
   ManDownload({
-    required this.key,
     required this.complete,
     required this.speed,
     required this.porcent,
@@ -39,24 +38,14 @@ class ManDownload {
 }
 
 class StatusDownload {
-  bool join, forceKill, kill, error, rangeAccept;
-  SendPort? sendPort;
-  ManDownload main = ManDownload(
-    key: 0,
-    porcent: 0,
-    sizeDownload: 0,
-    sizeFinal: 0,
-    main: true,
-    complete: false,
-    speed: '...MB',
-  );
-  List<ManDownload> part = [];
+  bool join, error, init;
+  ManDownload main;
+  List<ManDownload> part;
   StatusDownload({
     this.error = false,
     this.join = false,
-    this.forceKill = false,
-    this.rangeAccept = true,
-    this.sendPort,
-    this.kill = false,
+    this.init = false,
+    required this.main,
+    required this.part,
   });
 }

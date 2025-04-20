@@ -1,27 +1,40 @@
-import 'package:downloader_manager/src/file.dart';
-import 'package:downloader_manager/src/model.dart';
-
+import 'file.dart';
+import 'model.dart';
 import 'setting.dart';
+
+enum ErrorIsolate {
+  //se alcanzo el limite de isolate activos
+  limit,
+  //no se encontro ningun error
+  noEror,
+  //todos los isolates estan ocupados pero se añade a la lista de espera
+  waiting,
+}
 
 class DownRequire {
   String fileName, url;
-  bool priority, extension;
+  bool extension;
   ManSettings? setting;
-  int token;
+  int tokenDownload;
   DownRequire({
     this.fileName = '',
     required this.url,
-    this.priority = false,
     this.extension = true,
     this.setting,
-    this.token = 0,
+    this.tokenDownload = 0,
   });
 }
 
+//sera este el retorno de las descargas para manejar el estado de la descarga
 class DownloadManagerResponse {
   int token;
   bool status;
-  DownloadManagerResponse({required this.token, required this.status});
+  ErrorIsolate error;
+  DownloadManagerResponse({
+    required this.token,
+    required this.status,
+    this.error = ErrorIsolate.noEror,
+  });
 }
 
 class SelectTask {

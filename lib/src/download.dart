@@ -36,6 +36,7 @@ class StatusItem {
 }
 
 class RunDownload {
+  late int tokenIsolate;
   int startTime = 0;
   late Timer sendInterval;
   bool startInit = false;
@@ -44,43 +45,63 @@ class RunDownload {
   final cln = http.Client();
   int totalSize = 0;
   String fOut = '';
-  bool sendPort = false;
+  late SendPort sendPort;
   final Map<int, StreamSubscription> streamPart = {};
   late StreamSubscription reciverData;
   List<StatusItem> endpart = [];
-  Map<int, Future<bool>> run = {};
-  StatusDownload status = StatusDownload();
+  Map<int, Future> run = {};
+  SendportData status = SendportData();
   late ManReques request;
-  late ManSettings manSetting;
   late Map<String, dynamic> header;
   late ReceivePort rcv;
-  @pragma('vm:entry-point')
-  starDownload(ManReques req) {
+  createIsolate(RequestCreate requestIso) async {
     rcv = ReceivePort();
-    reciverData = rcv.listen((m) {
+    tokenIsolate = requestIso.token;
+    sendPort = requestIso.sendPort;
+    request = ManReques(setting: requestIso.setting, url: '', tokenDownload: 0);
+    ManSettings setting = requestIso.setting;
+    reciverData = rcv.listen((m) async {
+      print('resibimos el mensaje del isolate ${m.runtimeType}');
       ManMessagePort rver = m;
       if (rver.action == 'add') {
-        request.fileName = rver.name;
-        request.url = rver.url;
-        manSetting = request.setting;
+        request = rver.download!;
+        if (rver.download!.setting == null) {
+          request.setting = setting;
+        }
+        if (startInit) {
+          endpart.clear();
+          streamPart.clear();
+          status = SendportData();
+          sendInterval.cancel();
+        }
+        status.tokenDownload = rver.download!.tokenDownload;
         numPart = 0;
         startInit = false;
-        endpart.clear();
-        streamPart.clear();
-        status = StatusDownload();
-        sendInterval.cancel();
+        startTime = DateTime.now().millisecondsSinceEpoch;
+        sendPort.send(
+          SendportData(
+            tokenDownload: status.tokenDownload,
+            startDownload: true,
+          ),
+        );
         download();
-      } else if (rver.action == 'sendport') {
-        sendPort = true;
-      } else if (rver.action == 'kill') {
-        status.forceKill = true;
-        sendStatus();
-        sendInterval.cancel();
+      } else if (rver.action == 'stop') {
+        if (startInit) {
+          endpart.clear();
+          status = SendportData();
+          sendInterval.cancel();
+          run.forEach((key, value) async {
+            await streamPart[key]?.cancel();
+            run.remove(key);
+          });
+          streamPart.clear();
+        }
+
+        numPart = 0;
+        startInit = false;
       }
     });
-    request = req;
-    manSetting = request.setting;
-    download();
+    sendPort.send(SendportData(sendPort: rcv.sendPort, init: true));
   }
 
   @pragma('vm:entry-point')
@@ -88,6 +109,12 @@ class RunDownload {
     ManHttpStatus flD = await checkConexionFile(request.url);
     if (flD.status) {
       header = flD.header;
+      if (!startInit) {
+        startInit = true;
+        sendInterval = Timer.periodic(Duration(seconds: 1), (_) {
+          sendStatus();
+        });
+      }
       final int total =
           (header.containsKey('accept-ranges') == true &&
                   header['accept-ranges'] == 'bytes' &&
@@ -103,7 +130,6 @@ class RunDownload {
           endPart = total - ((numPart - 1) * partDwn);
         }
         status.main = ManDownload(
-          key: request.token,
           porcent: 0,
           sizeDownload: 0,
           sizeFinal: total,
@@ -122,7 +148,6 @@ class RunDownload {
           }
           status.part.add(
             ManDownload(
-              key: request.token,
               porcent: 0,
               sizeDownload: 0,
               sizeFinal: ipart,
@@ -155,29 +180,20 @@ class RunDownload {
       }
       initFuture();
     } else {
-      request.sendPort?.send(StatusDownload(error: true));
+      request.sendPort?.send(SendportData(error: true));
     }
   }
 
   @pragma('vm:entry-point')
-  initFuture({bool err = false}) async {
+  initFuture() async {
     int nunRun = streamPart.length;
     bool error = false;
-    if (nunRun < manSetting.conexion) {
+    if (nunRun < request.setting!.conexion) {
       bool merge = false;
       int numComplet = 0;
       for (StatusItem e in endpart) {
-        if (!e.complete && !e.start) {
-          if (nunRun < manSetting.conexion) {
-            endpart[e.part.id].start = true;
-            run.addAll({e.part.id: downloadPart(e.part)});
-            nunRun++;
-          }
-        }
-        if (err) {
-          if (nunRun <= manSetting.conexion) {
-            endpart[e.part.id].error = false;
-            endpart[e.part.id].start = true;
+        if (!e.start) {
+          if (nunRun < request.setting!.conexion) {
             run.addAll({e.part.id: downloadPart(e.part)});
             nunRun++;
           }
@@ -199,74 +215,66 @@ class RunDownload {
         status.main.complete = true;
         await chargingMerge();
       }
-      if (!startInit) {
-        startTime = DateTime.now().millisecondsSinceEpoch;
-        startInit = true;
-        sendInterval = Timer.periodic(Duration(seconds: 1), (_) {
-          sendStatus();
-        });
-      }
     }
   }
 
   @pragma('vm:entry-point')
-  Future<bool> downloadPart(PartDownload part) async {
-    bool ret = true;
-    try {
-      File f = File('${manSetting.folderTemp}${request.token}${part.id}');
-      http.Request req = http.Request('Get', Uri.parse(part.url));
-      bool exists = await f.exists();
-      int idow = 0;
-      if (exists) {
-        idow = await f.length();
-        totalSize += idow;
-        part.start = part.start + idow;
-        req.headers['range'] =
-            'bytes=${part.start}-${part.end == 0 ? '' : part.end}';
-        if (part.end - part.start < 0) {
-          return ret;
-        }
-      } else {
-        req.headers['range'] =
-            'bytes=${part.start}-${part.end == 0 ? '' : part.end}';
-      }
-      http.StreamedResponse res = await cln.send(req);
-      IOSink fOut =
-          exists
-              ? f.openWrite(mode: FileMode.append)
-              : f.openWrite(mode: FileMode.writeOnlyAppend);
-      streamPart.addAll({
-        part.id: res.stream.listen((byte) async {
-          idow += byte.length;
-          totalSize += byte.length;
-          status.part[part.id].porcent =
-              (idow * 100 / status.part[part.id].sizeFinal).clamp(0.0, 100);
-          status.part[part.id].sizeDownload = idow;
-          fOut.add(byte);
-        }),
-      });
-
-      streamPart[part.id]!.onDone(() async {
-        status.part[part.id].complete = true;
+  downloadPart(PartDownload part) async {
+    File f = File(
+      '${request.setting!.folderTemp}${request.tokenDownload}${part.id}',
+    );
+    http.Request req = http.Request('Get', Uri.parse(part.url));
+    bool exists = await f.exists();
+    int idow = 0;
+    endpart[part.id].start = true;
+    if (exists) {
+      idow = await f.length();
+      totalSize += idow;
+      part.start = part.start + idow;
+      req.headers['range'] =
+          'bytes=${part.start}-${part.end == 0 ? '' : part.end}';
+      if (part.end - part.start < 0) {
         endpart[part.id].complete = true;
-        status.part[part.id].porcent = 100;
-        streamPart[part.id]?.cancel();
-        streamPart.remove(part.id);
-        run.remove(part.id);
-        fOut.close();
         initFuture();
-      });
-      streamPart[part.id]!.onError((e) {
-        streamPart[part.id]!.cancel();
-        endpart[part.id].error = true;
-        streamPart.remove(part.id);
-        run.remove(part.id);
-        initFuture();
-      });
-    } catch (e) {
-      ret = false;
+        return false;
+      }
+    } else {
+      req.headers['range'] =
+          'bytes=${part.start}-${part.end == 0 ? '' : part.end}';
     }
-    return ret;
+    http.StreamedResponse res = await cln.send(req);
+    IOSink fOut =
+        exists
+            ? f.openWrite(mode: FileMode.append)
+            : f.openWrite(mode: FileMode.writeOnlyAppend);
+    streamPart.addAll({
+      part.id: res.stream.listen((byte) async {
+        idow += byte.length;
+        totalSize += byte.length;
+        status.part[part.id].porcent =
+            (idow * 100 / status.part[part.id].sizeFinal).clamp(0.0, 100);
+        status.part[part.id].sizeDownload = idow;
+        fOut.add(byte);
+      }),
+    });
+
+    streamPart[part.id]!.onDone(() async {
+      status.part[part.id].complete = true;
+      endpart[part.id].complete = true;
+      status.part[part.id].porcent = 100;
+      streamPart[part.id]?.cancel();
+      streamPart.remove(part.id);
+      run.remove(part.id);
+      fOut.close();
+      initFuture();
+    });
+    streamPart[part.id]!.onError((e) {
+      streamPart[part.id]!.cancel();
+      endpart[part.id].error = true;
+      streamPart.remove(part.id);
+      run.remove(part.id);
+      print(e);
+    });
   }
 
   @pragma('vm:entry-point')
@@ -274,7 +282,7 @@ class RunDownload {
     fOut = await joinMerge(
       request,
       header: header,
-      manSetting: manSetting,
+      manSetting: request.setting!,
       numpart: endpart.length,
     );
   }
@@ -292,14 +300,11 @@ class RunDownload {
   @pragma('vm:entry-point')
   sendStatus() async {
     int sidow = 0;
-    for (var e in status.part) {
+    for (ManDownload e in status.part) {
       sidow += e.sizeDownload;
     }
     status.main.porcent = totalSize * 100 / status.main.sizeFinal;
     status.main.sizeDownload = sidow;
-    if (!sendPort) {
-      status.sendPort = rcv.sendPort;
-    }
     status.main.speed = velocity(
       startTime: startTime,
       size: status.main.sizeDownload,
@@ -309,15 +314,18 @@ class RunDownload {
         status.join = true;
       }
     }
+    //cuando el porcentaje de descarga sea 100% se empezara a reducir el limite de envios al sendport y cuando llegue a 0 se lioberara el isolate para su nuevo uso
     if (status.main.complete && limitSend >= 0 && status.join) {
       status.main.porcent = 100;
       limitSend--;
     }
-
     if (limitSend == 0) {
       status.kill = true;
+      status.freeIsolate = true;
+    }
+    sendPort.send(status);
+    if (limitSend == 0) {
       sendInterval.cancel();
     }
-    request.sendPort?.send(status);
   }
 }

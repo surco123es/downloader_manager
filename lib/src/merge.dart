@@ -28,7 +28,7 @@ Future<String> joinMerge(
       String ext =
           '.${manMime.getExt(header.containsKey('content-type') ? header["content-type"] : '')}';
       if (req.fileName == '') {
-        req.fileName = req.token.toString();
+        req.fileName = req.tokenDownload.toString();
       }
       fName = '${manSetting.folderOut}${req.fileName}.$ext';
     } else {
@@ -47,7 +47,7 @@ Future<String> joinMerge(
     }
     IOSink fl = fli.openWrite(mode: FileMode.writeOnlyAppend);
     for (int i = 0; i < numpart; i++) {
-      File f = File('${manSetting.folderTemp}${req.token}$i');
+      File f = File('${manSetting.folderTemp}${req.tokenDownload}$i');
       if (await f.exists()) {
         Stream<List<int>> read = f.openRead();
         await fl.addStream(read).then((_) async {

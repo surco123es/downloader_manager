@@ -4,48 +4,76 @@ import 'dart:isolate';
 import '../downloader_manager.dart';
 
 class StatusDownloadIsolate {
-  bool complete, pause, kill, init;
+  bool complete, pause, init;
   late StatusDownload status;
-
+  int tokenIsolate;
+  int tokenDownload;
   StatusDownloadIsolate({
+    required this.tokenIsolate,
+    this.tokenDownload = 0,
     this.complete = false,
     this.pause = false,
-    this.kill = false,
     this.init = false,
-  });
+  }) {
+    status = StatusDownload(
+      main: ManDownload(
+        complete: complete,
+        speed: '',
+        porcent: 0,
+        sizeDownload: 0,
+        sizeFinal: 0,
+        main: true,
+      ),
+      part: [],
+    );
+  }
 }
 
 class TaskDownload {
   late Isolate root;
-  StatusDownloadIsolate status = StatusDownloadIsolate();
+  //estes sendport se crea al iniciar el isolate y que este responda corectamente
+  late SendPort _sendPort;
+  StatusDownloadIsolate status;
+  bool freeIsolate = true;
   final StreamController<StatusDownload> statusDownload =
       StreamController<StatusDownload>.broadcast();
   ReceivePort rcvPort = ReceivePort();
-  ReceivePort _error = ReceivePort();
-  int token;
 
   late Capability resume;
-  TaskDownload({required this.token});
+  TaskDownload({required this.status}) {
+    listing();
+  }
+  SendPort sendPortIsolate() {
+    return _sendPort;
+  }
 
   listing() {
-    status.init = true;
-    root.addErrorListener(_error.sendPort);
-    _error.listen((error) {
-      print("Error recibido del isolate: ${error[0]}");
-      print("StackTrace: ${error[1]}");
-    });
     rcvPort.listen((val) async {
-      status.status = val;
-      statusDownload.sink.add(status.status);
-      if ((status.status.main.complete && !status.kill)) {
-        status.complete = status.status.forceKill ? false : true;
-        if (!status.kill) {
-          status.kill = true;
-          rcvPort.close();
-          statusDownload.close();
-          root.kill(priority: Isolate.immediate);
-        }
+      print('recibimos el mensaje del isolate ${val.runtimeType}');
+      SendportData _status = val;
+      status.status.main = _status.main;
+      status.status.part = _status.part;
+      if (status.tokenDownload == _status.tokenDownload) {
+        statusDownload.sink.add(status.status);
+      }
+      if (_status.init) {
+        _sendPort = _status.sendPort!;
+        print('creamos el isolate ${status.tokenIsolate}');
+      } else if (_status.error) {
+        print('ocurio un error en el isolate ${status.tokenIsolate}');
+      } else if (_status.startDownload) {
+        status.tokenDownload = _status.tokenDownload;
+      } else if (_status.freeIsolate) {
+        freeIsolate = true;
+      } else if (_status.join) {
+        status.complete = true;
       }
     });
   }
+}
+
+class TokenDownload {
+  int isolateToken;
+  bool active;
+  TokenDownload({required this.isolateToken, this.active = false});
 }
