@@ -1,4 +1,4 @@
-import 'package:downloader_manager/download_manager.dart';
+import 'package:downloader_manager/downloader_manager.dart';
 import 'package:downloader_manager/src/model.dart';
 
 ManagerDownload manDown = ManagerDownload();

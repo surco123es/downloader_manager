@@ -88,7 +88,6 @@ class RunDownload {
     ManHttpStatus flD = await checkConexionFile(request.url);
     if (flD.status) {
       header = flD.header;
-      print(header);
       final int total =
           (header.containsKey('accept-ranges') == true &&
                   header['accept-ranges'] == 'bytes' &&
@@ -156,7 +155,7 @@ class RunDownload {
       }
       initFuture();
     } else {
-      request.sendPort?.send(StatusDownload());
+      request.sendPort?.send(StatusDownload(error: true));
     }
   }
 
@@ -225,7 +224,6 @@ class RunDownload {
         req.headers['range'] =
             'bytes=${part.start}-${part.end == 0 ? '' : part.end}';
         if (part.end - part.start < 0) {
-          //initFuture();
           return ret;
         }
       } else {
@@ -264,10 +262,8 @@ class RunDownload {
         streamPart.remove(part.id);
         run.remove(part.id);
         initFuture();
-        print(e);
       });
     } catch (e) {
-      print(e);
       ret = false;
     }
     return ret;
