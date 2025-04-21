@@ -5,6 +5,7 @@ import '../downloader_manager.dart';
 
 class StatusDownloadIsolate {
   bool complete, pause, init;
+
   late StatusDownload status;
   int tokenIsolate;
   int tokenDownload;
@@ -33,6 +34,7 @@ class TaskDownload {
   late Isolate root;
   //estes sendport se crea al iniciar el isolate y que este responda corectamente
   late SendPort _sendPort;
+  Completer<SendPort> _completer = Completer<SendPort>();
   StatusDownloadIsolate status;
   bool freeIsolate = true;
   final StreamController<StatusDownload> statusDownload =
@@ -49,24 +51,38 @@ class TaskDownload {
 
   listing() {
     rcvPort.listen((val) async {
-      print('recibimos el mensaje del isolate ${val.runtimeType}');
-      SendportData _status = val;
-      status.status.main = _status.main;
-      status.status.part = _status.part;
-      if (status.tokenDownload == _status.tokenDownload) {
-        statusDownload.sink.add(status.status);
+      bool sendStream = false;
+      if (val is CreateIsolateSendPort) {
+        _sendPort = val.sendPort;
+        return;
       }
-      if (_status.init) {
-        _sendPort = _status.sendPort!;
-        print('creamos el isolate ${status.tokenIsolate}');
-      } else if (_status.error) {
+      if (val is ManDownload) {
+        status.status.main = val;
+        sendStream = true;
+      }
+      if (val is List<ManDownload>) {
+        status.status.part = val;
+        sendStream = true;
+      }
+      if (val is ErrorSendPort) {
+        status.status.error = true;
         print('ocurio un error en el isolate ${status.tokenIsolate}');
-      } else if (_status.startDownload) {
-        status.tokenDownload = _status.tokenDownload;
-      } else if (_status.freeIsolate) {
-        freeIsolate = true;
-      } else if (_status.join) {
-        status.complete = true;
+        print('ocurio un error en el isolate ${val.errorObject}');
+        print('ocurio un error en el isolate ${val.stack}');
+        sendStream = true;
+      }
+      if (val is StatusDownloadSendPort) {
+        if (val.startDownload) {
+          status.tokenDownload = val.tokenDownload;
+        } else if (val.freeIsolate) {
+          freeIsolate = true;
+        } else if (val.join) {
+          status.complete = true;
+        }
+      }
+
+      if (sendStream) {
+        statusDownload.sink.add(status.status);
       }
     });
   }

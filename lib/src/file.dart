@@ -27,6 +27,7 @@ class ManDownload {
   bool main, complete;
   double porcent;
   String speed;
+
   ManDownload({
     required this.complete,
     required this.speed,

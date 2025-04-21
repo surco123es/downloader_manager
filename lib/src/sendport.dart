@@ -9,26 +9,26 @@ class ManMessagePort {
   ManMessagePort({required this.action, this.download});
 }
 
-class SendportData {
-  SendPort? sendPort;
+class CreateIsolateSendPort {
+  SendPort sendPort;
+  CreateIsolateSendPort({required this.sendPort});
+}
+
+class ErrorSendPort {
+  StackTrace? stack;
+  Object errorObject;
+  ErrorSendPort({required this.errorObject, this.stack});
+}
+
+class StatusDownloadSendPort {
   bool join, kill, error, rangeAccept, init, freeIsolate, startDownload;
   int tokenDownload;
-  ManDownload main = ManDownload(
-    porcent: 0,
-    sizeDownload: 0,
-    sizeFinal: 0,
-    main: true,
-    complete: false,
-    speed: '...MB',
-  );
-  List<ManDownload> part = [];
-  SendportData({
-    this.sendPort,
-    this.error = false,
+  StatusDownloadSendPort({
     this.join = false,
-    this.init = false,
-    this.rangeAccept = true,
     this.kill = false,
+    this.error = false,
+    this.rangeAccept = true,
+    this.init = false,
     this.freeIsolate = false,
     this.startDownload = false,
     this.tokenDownload = 0,

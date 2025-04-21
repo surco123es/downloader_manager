@@ -43,7 +43,6 @@ class DownloaderManager {
 
   @pragma('vm:entry-point')
   Future<DownloadManagerResponse> download({required DownRequire req}) async {
-    print('object');
     if (_downloadsTask.containsKey(req.tokenDownload)) {
       //retorna el isolate en el cual se esta descargando
       return DownloadManagerResponse(
@@ -77,8 +76,8 @@ class DownloaderManager {
     if (req.tokenDownload == 0) {
       req.tokenDownload = ManSettings().token();
     }
-    _select(response.token).task?.sendPortIsolate().send(
-      ManMessagePort(
+    _select(response.token).task?.sendPortIsolate().send({
+      'data': ManMessagePort(
         action: 'add',
         download: ManReques(
           setting: req.setting,
@@ -88,7 +87,7 @@ class DownloaderManager {
           tokenDownload: req.tokenDownload,
         ),
       ),
-    );
+    });
     return response;
   }
 
