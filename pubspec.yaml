@@ -1,12 +1,13 @@
 name: downloader_manager
 description: downloader_manager es una librería para Dart que te permite gestionar descargas de archivos desde internet de forma sencilla, eficiente y controlada. ¡Automatiza, pausa, reanuda, monitorea y detén descargas fácilmente en tus proyectos Dart o Flutter!
-version: 2.5.1
+version: 3.5.0
 repository: https://github.com/surco123es/downloader_manager
 
 environment:
   sdk: ^3.7.1
 dependencies:
   http: ^1.1.0
+  mutex: ^3.1.0
 
 dev_dependencies:
   lints: ^5.0.0

@@ -3,93 +3,67 @@ import 'dart:isolate';
 
 import '../downloader_manager.dart';
 
-class StatusDownloadIsolate {
-  bool complete, pause, init;
+enum StatusIsolateType {
+  waiting,
+  waitingFileExists,
+  freeIsolate,
+  fileExists,
+  pause,
+  downloading,
+  error,
+  errorConexion,
+  cancelDownload,
+  startDownload,
+  canceling,
+}
 
+class StatusDownloadIsolate {
   late StatusDownload status;
   int tokenIsolate;
-  int tokenDownload;
-  StatusDownloadIsolate({
-    required this.tokenIsolate,
-    this.tokenDownload = 0,
-    this.complete = false,
-    this.pause = false,
-    this.init = false,
-  }) {
+  StatusDownloadIsolate({required this.tokenIsolate}) {
     status = StatusDownload(
-      main: ManDownload(
-        complete: complete,
-        speed: '',
-        porcent: 0,
-        sizeDownload: 0,
-        sizeFinal: 0,
-        main: true,
-      ),
+      main: ManDownload(speed: '', porcent: 0, sizeDownload: 0, sizeFinal: 0),
       part: [],
     );
   }
 }
 
 class TaskDownload {
-  late Isolate root;
+  StatusIsolateType statusIsolate = StatusIsolateType.freeIsolate;
+  late Isolate _root;
+  int tokenDownload = 0;
   //estes sendport se crea al iniciar el isolate y que este responda corectamente
   late SendPort _sendPort;
-  Completer<SendPort> _completer = Completer<SendPort>();
   StatusDownloadIsolate status;
-  bool freeIsolate = true;
   final StreamController<StatusDownload> statusDownload =
       StreamController<StatusDownload>.broadcast();
   ReceivePort rcvPort = ReceivePort();
 
   late Capability resume;
-  TaskDownload({required this.status}) {
-    listing();
-  }
-  SendPort sendPortIsolate() {
-    return _sendPort;
+
+  set root(Isolate root) {
+    _root = root;
   }
 
-  listing() {
-    rcvPort.listen((val) async {
-      bool sendStream = false;
-      if (val is CreateIsolateSendPort) {
-        _sendPort = val.sendPort;
-        return;
-      }
-      if (val is ManDownload) {
-        status.status.main = val;
-        sendStream = true;
-      }
-      if (val is List<ManDownload>) {
-        status.status.part = val;
-        sendStream = true;
-      }
-      if (val is ErrorSendPort) {
-        status.status.error = true;
-        print('ocurio un error en el isolate ${status.tokenIsolate}');
-        print('ocurio un error en el isolate ${val.errorObject}');
-        print('ocurio un error en el isolate ${val.stack}');
-        sendStream = true;
-      }
-      if (val is StatusDownloadSendPort) {
-        if (val.startDownload) {
-          status.tokenDownload = val.tokenDownload;
-        } else if (val.freeIsolate) {
-          freeIsolate = true;
-        } else if (val.join) {
-          status.complete = true;
-        }
-      }
+  SendPort get sendPort => _sendPort;
+  set sendPort(SendPort sndPort) {
+    _sendPort = sndPort;
+  }
 
-      if (sendStream) {
-        statusDownload.sink.add(status.status);
-      }
-    });
+  Isolate get root => _root;
+
+  TaskDownload({required this.status});
+
+  bool getStatus(int tokenDownload) {
+    return (tokenDownload == this.tokenDownload);
   }
 }
 
-class TokenDownload {
+class TokenDownloadStatus {
   int isolateToken;
-  bool active;
-  TokenDownload({required this.isolateToken, this.active = false});
+  DownloadType status;
+  TokenDownloadStatus({
+    required this.isolateToken,
+    this.status = DownloadType.waiting,
+  });
 }

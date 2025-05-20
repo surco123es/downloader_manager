@@ -1,6 +1,7 @@
 import 'dart:isolate';
 
-import 'file.dart';
+import 'package:downloader_manager/src/model.dart';
+
 import 'request.dart';
 
 class ManMessagePort {
@@ -21,16 +22,7 @@ class ErrorSendPort {
 }
 
 class StatusDownloadSendPort {
-  bool join, kill, error, rangeAccept, init, freeIsolate, startDownload;
+  StatusIsolateType status;
   int tokenDownload;
-  StatusDownloadSendPort({
-    this.join = false,
-    this.kill = false,
-    this.error = false,
-    this.rangeAccept = true,
-    this.init = false,
-    this.freeIsolate = false,
-    this.startDownload = false,
-    this.tokenDownload = 0,
-  });
+  StatusDownloadSendPort({required this.tokenDownload, required this.status});
 }

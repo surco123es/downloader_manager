@@ -1,6 +1,4 @@
-// ignore_for_file: camel_case_types, unused_element
-
-import 'dart:isolate';
+import 'model_require.dart';
 
 class ManFile {
   String title, folderTemp, folderOut, url;
@@ -24,29 +22,20 @@ class ManFile {
 
 class ManDownload {
   int sizeDownload, sizeFinal;
-  bool main, complete;
+  DownloadType status = DownloadType.waiting;
   double porcent;
   String speed;
-
   ManDownload({
-    required this.complete,
     required this.speed,
     required this.porcent,
     required this.sizeDownload,
     required this.sizeFinal,
-    required this.main,
   });
 }
 
 class StatusDownload {
-  bool join, error, init;
   ManDownload main;
+  DownloadType statusDownload = DownloadType.waiting;
   List<ManDownload> part;
-  StatusDownload({
-    this.error = false,
-    this.join = false,
-    this.init = false,
-    required this.main,
-    required this.part,
-  });
+  StatusDownload({required this.main, required this.part});
 }

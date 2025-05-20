@@ -20,4 +20,21 @@ class ManSettings {
     int token = min + random.nextInt((max + 1) - 1);
     return token;
   }
+
+  factory ManSettings.fronJson(Map<String, dynamic> js) {
+    return ManSettings(
+      conexion: js['conexion'],
+      folderOut: js['folderOut'],
+      folderTemp: js['folderTemp'],
+      limitBand: js['limitBand'],
+    );
+  }
+  Map<String, dynamic> json() {
+    return {
+      'conexion': conexion,
+      'folderTemp': folderTemp,
+      'folderOut': folderOut,
+      'limitBand': limitBand,
+    };
+  }
 }
